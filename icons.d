@@ -1,4 +1,4 @@
-module spock.icons;
+module icons;
 import arsd.simpledisplay;
 immutable uint CELL=64;
 
