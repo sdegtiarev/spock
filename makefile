@@ -2,14 +2,17 @@
 DC= dmd
 GRAPHICS= arsd/simpledisplay.d arsd/color.d 
 
-all: t1 t2 
+all: spock spock1 spock2
 
-t1: t1.d spock/*.d
-	$(DC) t1 spock/*.d $(GRAPHICS)
+spock: spock.d human_player.d board.d display.d icons.d $(GRAPHICS)
+	$(DC) -g $^
 
-t2: t2.d spock/*.d
-	$(DC) t1 spock/*.d $(GRAPHICS)
+spock1: spock1.d human_player.d ai1_player.d board.d display.d icons.d $(GRAPHICS)
+	$(DC) -g $^
+
+spock2: spock2.d human_player.d ai2_player.d board.d display.d icons.d $(GRAPHICS)
+	$(DC) -g $^
 
 .PHONY: clean
 clean:
-	rm -f *.o t1 t2 core*
+	rm -f *.o spock spock1 spock2 core*
