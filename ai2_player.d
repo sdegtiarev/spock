@@ -10,35 +10,35 @@ import std.stdio;
 class AI_2
 {
 	private Side mine;
-	private Board board;
+	private Board *board;
 
-	this(Board board, Side side) {
+	this(ref Board board, Side side) {
 		this.mine=side;
-		this.board=board;
+		this.board=&board;
 	}
 
 	@property bool dead() { return false; }
 	void terminate() { }
 
+	auto moves() {
+		return board.variants_of(mine).filter!(a => board.is_safe_move(a));
+	}
+
 	auto random_move() {
-		auto r=tuple(Board.point(SIZE,SIZE),Board.point(SIZE,SIZE));
+		auto r=tuple(Board.cell(),Board.cell());
 		uint N=0;
-		foreach(p; board.units_of(mine)) {
-			foreach(n; board.targets_of(p)) {
-				if(board.unit(n) == Unit.knight && board.side(n) == mine.opposite)
-					return tuple(p,n);
-				if(is_fatal_move(tuple(p,n)))
-					continue;
-				if(uniform(0,++N) == 0) 
-					r=tuple(p,n);
-			}
+		foreach(m; board.variants_of(mine).filter!(a => board.is_safe_move(a))) {
+			if(board.unit(m.to) == Unit.knight && board.side(m.to) == mine.opposite)
+				return m;
+			if(uniform(0,++N) == 0) 
+				r=m;
 		}
 
 		if(r[0] && r[1]) {
 			//writeln(board.unit(r[0]),": ", r[0], "-", r[1]);
 			return r;
 		} else {
-			writeln("NO SAFE TURNS!\n");
+			writeln("NO SAFE TURNS!");
 			return random_unsafe_move;
 		}
 	}
@@ -47,12 +47,12 @@ class AI_2
 		foreach(p; board.units_of(mine))
 			foreach(n; board.targets_of(p))
 				return tuple(p,n);
-		writeln("NO TURNS FOUND!\n");
-		return tuple(Board.point(SIZE,SIZE),Board.point(SIZE,SIZE));
+		writeln("NO TURNS FOUND!");
+		return Board.Move();
 	}
 
 	bool is_fatal_move(T)(T x) {
-		auto tmp=board.dup;
+		auto tmp=*board;
 		tmp.move(x);
 		foreach(p; tmp.units_of(mine.opposite)) {
 			foreach(n; tmp.targets_of(p))
@@ -70,14 +70,24 @@ class AI_2
 			return;
 		}
 
+		//auto v=moves;
+		//bool mv=1;
+		//foreach(m; v.filter!(a => board.unit(a.to) == Unit.knight && board.side(a.to) == mine.opposite)) {
+		//	board.move(m);
+		//	mv=0;
+		//	break;
+		//}
+		//if(mv)
+		//	board.move(board.one_of(v));
+
+
 		board.move(random_move);
 		board.lock(mine.opposite);
 	}
 
 
-	private bool check_spock(Side t) const {
-		return !Board.cells
-			.filter!(a => board.side(a) == t)
+	private bool check_spock(Side player) {
+		return !board.units_of(player)
 			.filter!(a => board.unit(a) == Unit.knight)
 			.empty;
 	}

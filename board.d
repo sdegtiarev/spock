@@ -2,8 +2,9 @@ module board;
 import std.conv;
 import std.traits;
 import std.algorithm;
-import std.algorithm;
+import std.typecons;
 import std.exception;
+import std.random;
 
 immutable ubyte SIZE=5;
 immutable uint CELL=64;
@@ -34,87 +35,79 @@ Side opposite(Side x) {
 
 
 
-class Board
+
+
+struct Board
 {
 static @property int pixels() { return CELL*SIZE+1; }
-	struct point {
-		ubyte x,y;
+	struct cell {
+		ubyte x=SIZE,y=SIZE;
 		this(T)(T a, T b) if(isIntegral!T) { x=cast(ubyte) a; y=cast(ubyte) b; }
 		bool opCast(T)() if(is(T == bool)) { return x < SIZE && y < SIZE; }
-		point opBinary(string op)(dP d) { return point(mixin("x"~op~"d.x"), mixin("y"~op~"d.y")); }
+		cell opBinary(string op)(dP d) { return cell(mixin("x"~op~"d.x"), mixin("y"~op~"d.y")); }
 		void opOpAssign(string op)(dP d) { mixin("x"~op~"=d.x;"); mixin("y"~op~"=d.y;"); }
 		//auto toString() { return "("~to!string(x)~", "~to!string(y)~")"; }
 		auto toString() { return to!string(cast(char)(x+'A'))~to!string(cast(char)('0'+SIZE-y)); }
 	}
 	struct dP { int x, y; }
-	private struct rangeCells {
-		private int x=0, y=0;
-		point front() { return point(x,y); }
+	alias Move=Tuple!(cell,"from", cell,"to");
+	
+	private struct cellRange {
+		private uint x=0, y=0;
+		cell front() { return cell(x,y); }
 		bool empty() const { return x >= SIZE && y >= SIZE; }
 		void popFront() {
 			if(empty) return;
 			if(++x >= SIZE) {
-				x=0;
 				if(++y >= SIZE) { x=SIZE; y=SIZE; }
+				else x=0;
 			}
 		}
 	}
 
+	auto one_of(T)(T many) {
+		typeof(T.front) r;
+		ulong n=0;
+		foreach(one; many)
+			if(uniform(0,++n) == 0) r=one;
+		return r;
+	}
 
-	private ubyte[SIZE][SIZE] field;
+
+	private ubyte[SIZE][SIZE] field=init_field;
 	private Side player_turn=Side.white;
 
 	void lock(Side side) { player_turn=side; }
 	@property Side turn() { return player_turn; }
-	static auto cells() { return rangeCells(); }
+	static auto cells() { return cellRange(); }
 
+	void reset() { field=init_field; lock(player_turn=Side.white); }
 
-	this() { reset; }
+	ref ubyte at(cell p) { return field[p.x][p.y]; }
+	ubyte at(cell p) const { return field[p.x][p.y]; }
 
-	Board dup() {
-		auto x=new Board;
-		x.field[]=this.field;
-		x.player_turn=this.player_turn;
-		return x;
-	}
+	Unit unit(cell p) const { return cast(Unit) (at(p) & 0x07); }
+	Side side(cell p) const { return cast(Side) (at(p) & (Side.black|Side.white)); }
+	bool selected(cell p) const { return cast(bool) (at(p) & Mark.selected); }
+	bool targeted(cell p) const { return cast(bool) (at(p) & Mark.targeted); }
+	bool empty(cell p)    const { return unit(p) == Unit.none; }
 
-	void reset() { init_field(); player_turn=Side.white; }
-
-	ref ubyte at(point p) { return field[p.x][p.y]; }
-	ubyte at(point p) const { return field[p.x][p.y]; }
-
-	Unit unit(point p) const { return cast(Unit) (at(p) & 0x07); }
-	Side side(point p) const { return cast(Side) (at(p) & (Side.black|Side.white)); }
-	bool selected(point p) const { return cast(bool) (at(p) & Mark.selected); }
-	bool targeted(point p) const { return cast(bool) (at(p) & Mark.targeted); }
-	bool empty(point p)    const { return unit(p) == Unit.none; }
-
-	void select(point p) { at(p) |=Mark.selected; }
-	void target(point p) { at(p) |=Mark.targeted; }
-	void unselect(point p) { at(p) &=~(Mark.selected|Mark.targeted); }
+	void select(cell p) { at(p) |=Mark.selected; }
+	void target(cell p) { at(p) |=Mark.targeted; }
+	void unselect(cell p) { at(p) &=~(Mark.selected|Mark.targeted); }
 	void unselect() {
 		for(int y=0; y < SIZE; ++y)
-		for(auto p=point(0,y); p; p+=dP(1,0))
+		for(auto p=cell(0,y); p; p+=dP(1,0))
 			unselect(p);
 	}
 
-
-
-	void move(point p, point n) {
-		enforce(p, "invalid move from ("~to!string(p.x)~","~to!string(p.y)~")-("~to!string(n.x)~"-"~to!string(n.y)~")");
-		enforce(n, "invalid move to "~p.toString~"-"~n.toString);
-		ubyte t=(unit(p) == Unit.knight)? reincarnate(unit(n))|side(p) : 0;
-		at(n)=at(p);
-		at(p)=t;
-	}
-	void move(T)(T v) { move(v[0],v[1]); }
 
 
 	auto units_of(Side player) {
 		return Board.cells.filter!(a => side(a) == player);
 	}
 
-	point[] targets_of(point p) {
+	cell[] targets_of(cell p) {
 		switch(unit(p)) {
 			case Unit.pawn: return targets_of_pawn(p);
 			case Unit.bishop: return targets_of_bishop(p);
@@ -125,8 +118,39 @@ static @property int pixels() { return CELL*SIZE+1; }
 		}
 	}
 
-	private point[] targets_of_pawn(point p) {
-		point[] r;
+	static auto print_move(Move x) { return x[0].toString~"-"~x[1].toString; }
+
+	auto variants_of(Side player) {
+		return units_of(player).map!(a => targets_of(a).map!(b => Move(a,b))).joiner;
+	}
+
+	bool is_safe_move(Board.Move x) {
+		auto mine=side(x[0]);
+		auto tmp=this;
+		tmp.move(x);
+		// if we kill enemy last spock, the move is considered safe
+		if(tmp.units_of(mine.opposite).filter!(a => tmp.unit(a) == Unit.knight).empty)
+			return 1;
+		// simulate enemy's response and see if he may kill our knight
+		foreach(m; tmp.variants_of(mine.opposite)) {
+			if(tmp.unit(m.to) == Unit.knight && tmp.side(m.to) == mine)
+				return 0;
+		}
+		return 1;
+	}
+
+	void move(cell p, cell n) {
+		enforce(p, "invalid move from ("~to!string(p.x)~","~to!string(p.y)~")-("~to!string(n.x)~"-"~to!string(n.y)~")");
+		enforce(n, "invalid move to "~p.toString~"-"~n.toString);
+		ubyte t=(unit(p) == Unit.knight)? reincarnate(unit(n))|side(p) : 0;
+		at(n)=at(p);
+		at(p)=t;
+	}
+	void move(T)(T v) { move(v[0],v[1]); }
+
+
+	private cell[] targets_of_pawn(cell p) {
+		cell[] r;
 		foreach(dp; [dP(-1,1), dP(-1,0),dP(-1,-1),dP(0,1),dP(0,-1),dP(1,-1),dP(1,0),dP(1,1)]) {
 			for(auto n=p+dp; n; n=n+dp) {
 				if(unit(n) == Unit.none) r~=n;
@@ -138,8 +162,8 @@ static @property int pixels() { return CELL*SIZE+1; }
 		return r;
 	}
 
-	private point[] targets_of_bishop(point p) {
-		point[] r;
+	private cell[] targets_of_bishop(cell p) {
+		cell[] r;
 		foreach(dp; [dP(-1,-1),dP(-1,1),dP(1,-1),dP(1,1)]) {
 			for(auto n=p+dp; n; n=n+dp) {
 				if(unit(n) == Unit.none) { r~=n; continue; }
@@ -151,8 +175,8 @@ static @property int pixels() { return CELL*SIZE+1; }
 		return r;
 	}
 
-	private point[] targets_of_tour(point p) {
-		point[] r;
+	private cell[] targets_of_tour(cell p) {
+		cell[] r;
 		foreach(dp; [dP(-1,0), dP(1,0),dP(0,-1),dP(0,1)]) {
 			for(auto n=p+dp; n; n=n+dp) {
 				if(unit(n) == Unit.none) { r~=n; continue; }
@@ -164,8 +188,8 @@ static @property int pixels() { return CELL*SIZE+1; }
 		return r;
 	}
 
-	private point[] targets_of_queen(point p) {
-		point[] r;
+	private cell[] targets_of_queen(cell p) {
+		cell[] r;
 		foreach(dp; [dP(-1,0), dP(1,0),dP(0,-1),dP(0,1),dP(-1,-1), dP(-1,1),dP(1,-1),dP(1,1)]) {
 			for(auto n=p+dp; n; n=n+dp) {
 				if(unit(n) == Unit.none) { r~=n; continue; }
@@ -177,30 +201,36 @@ static @property int pixels() { return CELL*SIZE+1; }
 		return r;
 	}
 
-	private point[] targets_of_knight(point p) {
-		point[] r;
+	private cell[] targets_of_knight(cell p) {
+		cell[] r;
 		foreach(dp; [dP(-1,2), dP(1,2),dP(-1,-2),dP(1,-2),dP(-2,-1), dP(-2,1),dP(2,-1),dP(2,1)]) {
-			point n=p+dp;
+			cell n=p+dp;
 			if(!n || unit(n) == Unit.none) continue;
 			r~=n;
 		}
 		return r;
 	}
 
-	private void init_field() {
-		foreach(p; Board.cells)
-			at(p)=0;
+	private static auto init_field() {
+		ubyte[SIZE][SIZE] r;
+		for(int y=0; y < SIZE; ++y)
+		for(int x=0; x < SIZE; ++x)
+			r[x][y]=0;
+
 		for(int x=0; x < SIZE; ++x) {
-			field[x][SIZE-2]=Unit.pawn|Side.white;
-			field[x][1]=Unit.pawn|Side.black;
+			r[x][SIZE-2]=Unit.pawn|Side.white;
+			r[x][1]=Unit.pawn|Side.black;
 		}
-		field[0][0]=field[SIZE-1][0]=Unit.tour|Side.black;
-		field[0][SIZE-1]=field[SIZE-1][SIZE-1]=Unit.tour|Side.white;
-		field[1][0]=field[SIZE-2][0]=Unit.bishop|Side.black;
-		field[1][SIZE-1]=field[SIZE-2][SIZE-1]=Unit.bishop|Side.white;
-		field[2][0]=Unit.knight|Side.black;
-		field[2][SIZE-1]=Unit.knight|Side.white;
+		r[0][0]=r[SIZE-1][0]=Unit.tour|Side.black;
+		r[0][SIZE-1]=r[SIZE-1][SIZE-1]=Unit.tour|Side.white;
+		r[1][0]=r[SIZE-2][0]=Unit.bishop|Side.black;
+		r[1][SIZE-1]=r[SIZE-2][SIZE-1]=Unit.bishop|Side.white;
+		r[2][0]=Unit.knight|Side.black;
+		r[2][SIZE-1]=Unit.knight|Side.white;
+
+		return r;
 	}
 
+}//Board
 
-}
+

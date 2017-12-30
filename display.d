@@ -30,11 +30,11 @@ class SpockDisplay
 		init_icons();
 	}
 
-	Board.point inside(int x, int y) {
-		if(x <= off.x || y <= off.y) return Board.point(SIZE,SIZE);
+	Board.cell inside(int x, int y) {
+		if(x <= off.x || y <= off.y) return Board.cell(SIZE,SIZE);
 		x=(x-off.x)/CELL; y=(y-off.y)/CELL;
-		if(x >= SIZE || y >= SIZE) return Board.point(SIZE,SIZE);
-		return reverse? Board.point(x, SIZE-1-y) : Board.point(x,y);
+		if(x >= SIZE || y >= SIZE) return Board.cell(SIZE,SIZE);
+		return reverse? Board.cell(x, SIZE-1-y) : Board.cell(x,y);
 	}
 
 
@@ -43,7 +43,7 @@ class SpockDisplay
 		auto painter=window.draw();
 		for(int y=0; y < SIZE; ++y)
 		for(int x=0; x < SIZE; ++x) {
-			auto p=reverse? Board.point(x,SIZE-1-y) : Board.point(x,y);
+			auto p=reverse? Board.cell(x,SIZE-1-y) : Board.cell(x,y);
 			auto unit=board.at(p);
 			icon[unit].drawAt(painter, translate(x,y));
 		}

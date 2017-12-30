@@ -10,18 +10,18 @@ import std.stdio;
 class AI_1
 {
 	private Side side;
-	private Board board;
+	private Board *board;
 
-	this(Board board, Side side) {
+	this(ref Board board, Side side) {
 		this.side=side;
-		this.board=board;
+		this.board=&board;
 	}
 
 	@property bool dead() { return false; }
 	void terminate() { }
 
 	auto random_move() {
-		auto r=tuple(Board.point(SIZE,SIZE),Board.point(SIZE,SIZE));
+		auto r=tuple(Board.cell(SIZE,SIZE),Board.cell(SIZE,SIZE));
 		uint N=0;
 		foreach(p; Board.cells.filter!(a => board.side(a) == side)) {
 			foreach(n; board.targets_of(p)) {

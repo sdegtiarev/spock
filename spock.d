@@ -5,7 +5,7 @@ import std.stdio;
 
 void main(string[] arg)
 {
-	auto board=new Board();
+	Board board;
 	auto h1=new Human(board, Side.white);
 	auto h2=new Human(board, Side.black);
 

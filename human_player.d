@@ -8,13 +8,13 @@ class Human
 {
 	private SpockDisplay disp;
 	private Side side;
-	private Board board;
+	private Board *board;
 	private bool rollback, redo;
-	Board.point selection=Board.point(SIZE,SIZE);
+	Board.cell selection;
 
-	this(SpockDisplay disp, Board board, Side side) {
+	this(SpockDisplay disp, ref Board board, Side side) {
 		this.side=side;
-		this.board=board;
+		this.board=&board;
 		this.disp=(side == Side.white)? disp : disp.flip;
 		disp.window.setEventHandlers(
 			  (MouseEvent event) { handle_mouse(event); }
@@ -22,9 +22,9 @@ class Human
 		);
 	}
 
-	this(Board board, Side side) {
+	this(ref Board board, Side side) {
 		this.side=side;
-		this.board=board;
+		this.board=&board;
 		this.disp=display.display();
 		if(side == Side.black) 
 			disp.flip;
@@ -40,7 +40,7 @@ class Human
 	void make_turn() {
 		if(dead)
 			return;
-		disp.draw(board);
+		disp.draw(*board);
 		if(!check_spock) {
 			board.lock(Side.none);
 			disp.window.title("You lost");
@@ -62,7 +62,7 @@ class Human
 	private bool check_spock() const {
 		for(int y=0; y < SIZE; ++y)
 		for(int x=0; x < SIZE; ++x) {
-			auto p=Board.point(x,y);
+			auto p=Board.cell(x,y);
 			if(board.side(p) == side && board.unit(p) == Unit.knight)
 				return 1;
 		}
@@ -91,13 +91,13 @@ class Human
 			}
 		} else if(p == selection) {
 		// selection uncheck
-			selection=Board.point(SIZE,SIZE);
+			selection=Board.cell(SIZE,SIZE);
 			board.unselect;
 		} else if(board.targeted(p)) {
 		// make move
 			board.move(selection, p);
 			board.unselect;
-			selection=Board.point(SIZE,SIZE);
+			selection=Board.cell(SIZE,SIZE);
 			board.lock(side.opposite);
 		}
 		// false click, do nothing
@@ -114,7 +114,7 @@ class Human
 			//case 'a': case 'b': case 'c': case 'd': case 'e': ex=ch-'a'; break;
 			//case '1': case '2': case '3': case '4': case '5':
 			//	if(ex >= 0) {
-			//		b.click(Board.point(ex, SIZE-ch+'0'));
+			//		b.click(Board.cell(ex, SIZE-ch+'0'));
 			//		d1.draw(b);
 			//		d2.draw(b); ex=-1;
 			//		handle_title();
