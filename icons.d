@@ -1,6 +1,6 @@
 module icons;
 import arsd.simpledisplay;
-immutable uint CELL=64;
+private immutable uint CELL=64;
 
 
 

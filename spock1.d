@@ -5,9 +5,9 @@ import ai;
 
 void main(string[] arg)
 {
-	Board board;
-	auto h1=new Human(board, Side.white);
-	auto h2=new AI_1(board, Side.black);
+	Board!5 board;
+	auto h1=human.human(board, Side.white);
+	auto h2=ai.player_1(board, Side.black);
 
 	h1.loop((){
 		if(h1.dead) h2.terminate;

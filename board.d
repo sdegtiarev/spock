@@ -7,7 +7,6 @@ import std.exception;
 import std.random;
 import std.range;
 
-immutable ubyte SIZE=5;
 immutable uint CELL=64;
 enum Side : ubyte { none=0, white=0x08, black=0x10 }
 enum Mark : ubyte { none=0, selected=0x20, targeted=0x40 }
@@ -38,9 +37,10 @@ Side opposite(Side x) {
 
 
 
-struct Board
+struct Board(size_t SIZE)
 {
 static @property int pixels() { return CELL*SIZE+1; }
+	@property size_t size() const { return SIZE; }
 	struct cell {
 		ubyte x=SIZE,y=SIZE;
 		this(T)(T a, T b) if(isIntegral!T) { x=cast(ubyte) a; y=cast(ubyte) b; }
@@ -299,7 +299,13 @@ static string ident(int N)() {
 		r[1][0]=r[SIZE-2][0]=Unit.bishop|Side.black;
 		r[1][SIZE-1]=r[SIZE-2][SIZE-1]=Unit.bishop|Side.white;
 		r[2][0]=Unit.knight|Side.black;
-		r[2][SIZE-1]=Unit.knight|Side.white;
+		r[SIZE-3][SIZE-1]=Unit.knight|Side.white;
+		static if(SIZE == 5) {
+			} else static if(SIZE == 6) {
+				r[3][0]=Unit.queen|Side.black;
+				r[SIZE-4][SIZE-1]=Unit.queen|Side.white;
+			} else 
+				assert(0, "board size "~to!string(SIZE)~" is not supported");
 
 		return r;
 	}

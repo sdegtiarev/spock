@@ -3,63 +3,65 @@ import board;
 import icons;
 import arsd.simpledisplay;
 immutable int MARGIN=24;
-alias CELL=board.CELL;
 
 
-SpockDisplay display() {
-	auto window=new SimpleWindow(SpockDisplay.size, "spock");
-	return new SpockDisplay(window, Point(MARGIN,MARGIN));
+SpockDisplay display(int SIZE)(const ref Board!SIZE board) {
+	auto window=new SimpleWindow(SpockDisplay.size!SIZE, "spock");
+	return new SpockDisplay(window, Point(MARGIN,MARGIN), board);
 }
 
 class SpockDisplay
 {
-	static @property arsd.color.Size size() {
-		return arsd.color.Size(Board.pixels+2*MARGIN, Board.pixels+2*MARGIN);
+	static @property arsd.color.Size size(int SIZE)() {
+		return arsd.color.Size(SIZE*CELL+2*MARGIN, SIZE*CELL+2*MARGIN);
 	}
 	SimpleWindow window;
 	private Sprite[ubyte] icon;
 	private Point off;
 	private bool reverse;
 
-	SpockDisplay flip() {
+	SpockDisplay flip(int SIZE)(const ref Board!SIZE board) {
 		reverse=!reverse;
-		draw_labels();
+		draw_labels(board);
 		return this;
 	}
 
-	this(SimpleWindow window, Point off) {
+	this(int SIZE)(SimpleWindow window, Point off, const ref Board!SIZE board) {
 		this.window=window;
 		this.off=off;
 		this.reverse=0;
 		init_icons();
-		draw_labels();
+		draw_labels(board);
 	}
 
-	Board.cell inside(int x, int y) {
-		if(x <= off.x || y <= off.y) return Board.cell(SIZE,SIZE);
+	auto inside(int SIZE)(const ref Board!SIZE, int x, int y) {
+		if(x <= off.x || y <= off.y) return Board!SIZE.cell();
 		x=(x-off.x)/CELL; y=(y-off.y)/CELL;
-		if(x >= SIZE || y >= SIZE) return Board.cell(SIZE,SIZE);
-		return reverse? Board.cell(x, SIZE-1-y) : Board.cell(x,y);
+		if(x >= SIZE || y >= SIZE) return Board!SIZE.cell();
+		return reverse? Board!SIZE.cell(x, SIZE-1-y) : Board!SIZE.cell(x,y);
+	}
+	auto inside(int SIZE)(const Board!SIZE *board, int x, int y) {
+		return inside(*board, x, y);
 	}
 
 
-	void draw(ref Board board)
+	void draw(int SIZE)(ref Board!SIZE board)
 	{
 		auto painter=window.draw();
 		for(int y=0; y < SIZE; ++y)
 		for(int x=0; x < SIZE; ++x) {
-			auto p=reverse? Board.cell(x,SIZE-1-y) : Board.cell(x,y);
+			auto p=reverse? Board!SIZE.cell(x,SIZE-1-y) : Board!SIZE.cell(x,y);
 			auto unit=board.at(p);
 			icon[unit].drawAt(painter, translate(x,y));
 		}
-		draw_grid();
+		draw_grid(board);
 	}
 
 	Point translate(int x, int y) {
 		return Point(x*CELL+off.x, y*CELL+off.y);
 	}
 
-	private void draw_grid() {
+	private void draw_grid(int SIZE)(const ref Board!SIZE board) {
 		auto painter=window.draw();
 		painter.outlineColor=Color.black;
 		painter.fillColor=Color.black;
@@ -69,7 +71,7 @@ class SpockDisplay
 			painter.drawLine(translate(x,0), translate(x, SIZE));
 	}
 
-	private void draw_labels() {
+	private void draw_labels(int SIZE)(const ref Board!SIZE board) {
 		auto painter=window.draw;
 		painter.outlineColor=Color.white;
 		painter.fillColor=Color.white;

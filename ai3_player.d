@@ -7,12 +7,18 @@ import std.typecons;
 import std.exception;
 
 
-class AI_3
+auto player_3(size_t SIZE)(ref Board!SIZE board, Side side)
+{
+	return new AI_3!SIZE(board, side);
+}
+
+
+class AI_3(size_t SIZE)
 {
 	private Side mine;
-	private Board *board;
+	private Board!SIZE *board;
 
-	this(ref Board board, Side side) {
+	this(ref Board!SIZE board, Side side) {
 		this.mine=side;
 		this.board=&board;
 	}
@@ -31,14 +37,14 @@ class AI_3
 	}
 
 	auto best_move() {
-		Board.Move[][int] weight;
+		Board!SIZE.Move[][int] weight;
 		foreach(m; board.variants_of(mine))
-			weight[board.rank!4(m)]~=m;
+			weight[board.rank!2(m)]~=m;
 		if(weight.length == 0)
-			return Board.Move();
+			return Board!SIZE.Move();
 		auto w=sort!("a>b")(weight.byKey.array).front;
-		auto best=Board.one_of(weight[w]);
-		//writefln("%-6s %s    %s", board.unit(best.from),Board.print_move(best), w);
+		auto best=Board!SIZE.one_of(weight[w]);
+		//writefln("%-6s %s    %s", board.unit(best.from),Board!SIZE.print_move(best), w);
 		return best;
 	}
 

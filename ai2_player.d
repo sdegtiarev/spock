@@ -5,13 +5,18 @@ import std.algorithm;
 import std.array;
 import std.typecons;
 
+auto player_2(size_t SIZE)(ref Board!SIZE board, Side side)
+{
+	return new AI_2!SIZE(board, side);
+}
 
-class AI_2
+
+class AI_2(size_t SIZE)
 {
 	private Side mine;
-	private Board *board;
+	private Board!SIZE *board;
 
-	this(ref Board board, Side side) {
+	this(ref Board!SIZE board, Side side) {
 		this.mine=side;
 		this.board=&board;
 	}
@@ -20,7 +25,7 @@ class AI_2
 	void terminate() { }
 
 	auto random_move() {
-		auto r=Board.Move();
+		auto r=Board!SIZE.Move();
 		uint N=0;
 		auto v=board.variants_of(mine).filter!(a => board.is_safe_move(a)).array;
 		foreach(m; v) {
@@ -40,7 +45,7 @@ class AI_2
 		foreach(p; board.units_of(mine))
 			foreach(n; board.targets_of(p))
 				return tuple(p,n);
-		return Board.Move();
+		return Board!SIZE.Move();
 	}
 
 	void make_turn() {

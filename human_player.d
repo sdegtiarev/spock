@@ -4,30 +4,34 @@ import display;
 import arsd.simpledisplay;
 import std.conv : to;
 
+auto human(size_t SIZE)(ref Board!SIZE board, Side side)
+{
+	return new Human!SIZE(board, side);
+}
 
-class Human
+class Human(size_t SIZE)
 {
 	private SpockDisplay disp;
 	private Side side;
-	private Board *board;
-	Board.cell selection;
+	private Board!SIZE *board;
+	Board!SIZE.cell selection;
 
-	this(SpockDisplay disp, ref Board board, Side side) {
+	this(SpockDisplay disp, ref Board!SIZE board, Side side) {
 		this.side=side;
 		this.board=&board;
-		this.disp=(side == Side.white)? disp : disp.flip;
+		this.disp=(side == Side.white)? disp : disp.flip(board);
 		disp.window.setEventHandlers(
 			  (MouseEvent event) { handle_mouse(event); }
 			, (dchar ch) { handle_key(ch); }
 		);
 	}
 
-	this(ref Board board, Side side) {
+	this(ref Board!SIZE board, Side side) {
 		this.side=side;
 		this.board=&board;
-		this.disp=display.display();
+		this.disp=display.display(board);
 		if(side == Side.black) 
-			disp.flip;
+			disp.flip(board);
 		disp.window.setEventHandlers(
 			  (MouseEvent event) { handle_mouse(event); }
 			, (dchar ch) { handle_key(ch); }
@@ -44,14 +48,14 @@ class Human
 		if(!board.spock(side)) {
 			board.lock(Side.none);
 			if(board.last_move.from)
-				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board.print_move(board.last_move)~" : you lost");
+				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board!SIZE.print_move(board.last_move)~" : you lost");
 			else
 				disp.window.title("you lost");
 			return;
 		}
 		if(board.turn == side)
 			if(board.last_move.from)
-				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board.print_move(board.last_move)~" : your turn");
+				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board!SIZE.print_move(board.last_move)~" : your turn");
 			else
 				disp.window.title("your turn");
 		else if(board.turn == Side.none)
@@ -68,7 +72,7 @@ class Human
 	private bool check_spock() const {
 		for(int y=0; y < SIZE; ++y)
 		for(int x=0; x < SIZE; ++x) {
-			auto p=Board.cell(x,y);
+			auto p=Board!SIZE.cell(x,y);
 			if(board.side(p) == side && board.unit(p) == Unit.knight)
 				return 1;
 		}
@@ -82,7 +86,7 @@ class Human
 		if(board.turn != this.side)
 			return;
 
-		auto p=disp.inside(event.x, event.y);
+		auto p=disp.inside(board, event.x, event.y);
 		if(!p)  // point is outside of display area
 			return;
 
@@ -97,13 +101,13 @@ class Human
 			}
 		} else if(p == selection) {
 		// selection uncheck
-			selection=Board.cell(SIZE,SIZE);
+			selection=Board!SIZE.cell();
 			board.unselect;
 		} else if(board.targeted(p)) {
 		// make move
 			board.move(selection, p);
 			board.unselect;
-			selection=Board.cell(SIZE,SIZE);
+			selection=Board!SIZE.cell();
 			board.lock(side.opposite);
 		}
 		// false click, do nothing

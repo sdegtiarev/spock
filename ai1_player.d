@@ -5,13 +5,18 @@ import std.algorithm;
 import std.array;
 import std.typecons;
 
+auto player_1(size_t SIZE)(ref Board!SIZE board, Side side)
+{
+	return new AI_1!SIZE(board, side);
+}
 
-class AI_1
+
+class AI_1(size_t SIZE)
 {
 	private Side side;
-	private Board *board;
+	private Board!SIZE *board;
 
-	this(ref Board board, Side side) {
+	this(ref Board!SIZE board, Side side) {
 		this.side=side;
 		this.board=&board;
 	}
@@ -20,9 +25,9 @@ class AI_1
 	void terminate() { }
 
 	auto random_move() {
-		auto r=tuple(Board.cell(SIZE,SIZE),Board.cell(SIZE,SIZE));
+		auto r=Board!SIZE.Move();
 		uint N=0;
-		foreach(p; Board.cells.filter!(a => board.side(a) == side)) {
+		foreach(p; Board!SIZE.cells.filter!(a => board.side(a) == side)) {
 			foreach(n; board.targets_of(p)) {
 				if(board.unit(n) == Unit.knight && board.side(n) == side.opposite)
 					return tuple(p,n);
@@ -47,7 +52,7 @@ class AI_1
 
 
 	private bool check_spock(Side t) const {
-		return !Board.cells
+		return !Board!SIZE.cells
 			.filter!(a => board.side(a) == t)
 			.filter!(a => board.unit(a) == Unit.knight)
 			.empty;
