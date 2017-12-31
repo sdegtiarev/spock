@@ -21,13 +21,18 @@ class SpockDisplay
 	private Point off;
 	private bool reverse;
 
-	SpockDisplay flip() { reverse=!reverse; return this; }
+	SpockDisplay flip() {
+		reverse=!reverse;
+		draw_labels();
+		return this;
+	}
 
 	this(SimpleWindow window, Point off) {
 		this.window=window;
 		this.off=off;
 		this.reverse=0;
 		init_icons();
+		draw_labels();
 	}
 
 	Board.cell inside(int x, int y) {
@@ -63,6 +68,47 @@ class SpockDisplay
 		for(int x=0; x <= SIZE; ++x)
 			painter.drawLine(translate(x,0), translate(x, SIZE));
 	}
+
+	private void draw_labels() {
+		auto painter=window.draw;
+		painter.outlineColor=Color.white;
+		painter.fillColor=Color.white;
+		painter.drawRectangle(translate(-1,0), translate(0,SIZE));
+		painter.drawRectangle(translate(SIZE,0), translate(SIZE+1,SIZE));
+
+		auto almt=TextAlignment.Center|TextAlignment.VerticalCenter;
+		char[1] label=0;
+		painter.outlineColor=Color.black;
+		painter.fillColor=Color.black;
+		for(int x=0; x < SIZE; ++x) {
+			label[0]=cast(char) ('A'+x);
+			auto p1=Point(x*CELL+off.x, off.y-MARGIN);
+			auto p2=Point(x*CELL+CELL+off.x, off.y);
+			painter.drawText(p1, label, p2, almt);
+			p1=Point(x*CELL+off.x, off.y+SIZE*CELL);
+			p2=Point(x*CELL+CELL+off.x, off.y+SIZE*CELL+MARGIN);
+			label[0]=cast(char) ('A'+x);
+			painter.drawText(p1, label, p2, almt);
+		}
+		if(reverse) for(int y=0; y < SIZE; ++y) {
+			label[0]=cast(char) ('1'+y);
+			auto p1=Point(off.x-MARGIN, off.y+y*CELL);
+			auto p2=Point(off.x, off.y+y*CELL+CELL);
+			painter.drawText(p1, label, p2, almt);
+			p1=Point(off.x+SIZE*CELL, off.y+y*CELL);
+			p2=Point(off.x+MARGIN+SIZE*CELL, off.y+y*CELL+CELL);
+			painter.drawText(p1, label, p2, almt);
+		} else for(int y=0; y < SIZE; ++y) {
+			label[0]=cast(char) ('0'+SIZE-y);
+			auto p1=Point(off.x-MARGIN, off.y+y*CELL);
+			auto p2=Point(off.x, off.y+y*CELL+CELL);
+			painter.drawText(p1, label, p2, almt);
+			p1=Point(off.x+SIZE*CELL, off.y+y*CELL);
+			p2=Point(off.x+MARGIN+SIZE*CELL, off.y+y*CELL+CELL);
+			painter.drawText(p1, label, p2, almt);
+		}
+	}
+
 
 	private void init_icons()
 	{

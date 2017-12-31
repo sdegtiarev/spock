@@ -1,6 +1,5 @@
 import board;
 import human;
-import std.stdio;
 
 
 void main(string[] arg)

@@ -2,6 +2,7 @@ module human;
 import board;
 import display;
 import arsd.simpledisplay;
+import std.conv : to;
 
 
 class Human
@@ -9,7 +10,6 @@ class Human
 	private SpockDisplay disp;
 	private Side side;
 	private Board *board;
-	private bool rollback, redo;
 	Board.cell selection;
 
 	this(SpockDisplay disp, ref Board board, Side side) {
@@ -41,17 +41,23 @@ class Human
 		if(dead)
 			return;
 		disp.draw(*board);
-		if(!check_spock) {
+		if(!board.spock(side)) {
 			board.lock(Side.none);
-			disp.window.title("You lost");
+			if(board.last_move.from)
+				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board.print_move(board.last_move)~" : you lost");
+			else
+				disp.window.title("you lost");
 			return;
 		}
 		if(board.turn == side)
-			disp.window.title("Your turn");
+			if(board.last_move.from)
+				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board.print_move(board.last_move)~" : your turn");
+			else
+				disp.window.title("your turn");
 		else if(board.turn == Side.none)
-			disp.window.title("Your win");
+			disp.window.title("you win");
 		else 
-			disp.window.title("Wait ...");
+			disp.window.title("wait ...");
 	}
 
 	void loop(T)(T handler) {
@@ -104,22 +110,11 @@ class Human
 	}
 
 	private void handle_key(dchar ch) {
-		import std.stdio;
 		switch(ch) {
 			case 17: terminate;   break; // Ctl-Q
 			case 14: board.reset; break; // Ctl-N
-			case 26: rollback=1;  break; // Ctl-Z
-			case 25: redo=1;      break; // Ctl-Y
-			//case 27: b.unselect; d1.draw(b); d2.draw(b); ex=-1; break;
-			//case 'a': case 'b': case 'c': case 'd': case 'e': ex=ch-'a'; break;
-			//case '1': case '2': case '3': case '4': case '5':
-			//	if(ex >= 0) {
-			//		b.click(Board.cell(ex, SIZE-ch+'0'));
-			//		d1.draw(b);
-			//		d2.draw(b); ex=-1;
-			//		handle_title();
-			//	}
-			//	break;
+			case 26: break; // Ctl-Z
+			case 25: break; // Ctl-Y
 			default: //writeln("key ", ch, " (", cast(int) ch, ")");
 		}
 	}

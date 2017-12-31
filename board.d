@@ -5,6 +5,7 @@ import std.algorithm;
 import std.typecons;
 import std.exception;
 import std.random;
+import std.range;
 
 immutable ubyte SIZE=5;
 immutable uint CELL=64;
@@ -65,8 +66,8 @@ static @property int pixels() { return CELL*SIZE+1; }
 		}
 	}
 
-	auto one_of(T)(T many) {
-		typeof(T.front) r;
+	static auto one_of(T)(T many) {
+		ElementType!T r;
 		ulong n=0;
 		foreach(one; many)
 			if(uniform(0,++n) == 0) r=one;
@@ -76,12 +77,17 @@ static @property int pixels() { return CELL*SIZE+1; }
 
 	private ubyte[SIZE][SIZE] field=init_field;
 	private Side player_turn=Side.white;
+	Move last_move;
 
 	void lock(Side side) { player_turn=side; }
 	@property Side turn() { return player_turn; }
 	static auto cells() { return cellRange(); }
 
-	void reset() { field=init_field; lock(player_turn=Side.white); }
+	void reset() {
+		field=init_field;
+		last_move=Move();
+		lock(player_turn=Side.white);
+	}
 
 	ref ubyte at(cell p) { return field[p.x][p.y]; }
 	ubyte at(cell p) const { return field[p.x][p.y]; }
@@ -124,7 +130,37 @@ static @property int pixels() { return CELL*SIZE+1; }
 		return units_of(player).map!(a => targets_of(a).map!(b => Move(a,b))).joiner;
 	}
 
-	bool is_safe_move(Board.Move x) {
+	bool spock(Side player) {
+		return !units_of(player)
+			.filter!(a => unit(a) == Unit.knight)
+			.empty;
+	}
+
+static string ident(int N)() {
+	immutable char[256] s=' ';
+	return s[0..N-1].idup;
+}
+
+	int rank(int N)(Move x) {
+		static if(N == 0) {
+			return 0;
+		} else {
+			auto mine=side(x[0]);
+			int rnk=rank_move(x);
+
+			auto tmp=this;
+			tmp.move(x);
+
+			if(!tmp.spock(mine.opposite))
+				return 100;
+			int alien=int.min;
+			foreach(i; tmp.variants_of(mine.opposite).map!(a => tmp.rank!(N-1)(a)))
+				alien=max(alien, i);
+			return rnk-alien;
+		}
+	}
+
+	bool is_safe_move(Move x) {
 		auto mine=side(x[0]);
 		auto tmp=this;
 		tmp.move(x);
@@ -146,7 +182,44 @@ static @property int pixels() { return CELL*SIZE+1; }
 		at(n)=at(p);
 		at(p)=t;
 	}
-	void move(T)(T v) { move(v[0],v[1]); }
+	bool move(T)(T v) {
+		if(v[0] && v[1]) {
+			move(v[0],v[1]);
+			last_move=v;
+			return 1;
+		}
+		return 0;
+	}
+
+	int rank_move(Move m) {
+		return (unit(m.from) == Unit.knight)? rank_spock_move(m) : rank_unit_move(m);
+	}
+	private int rank_unit_move(Move m) {
+		auto mine=side(m.from);
+		auto number_of_kings=units_of(mine.opposite).count!(a => unit(a) == Unit.knight);
+		auto king_weigth=(number_of_kings > 1)? 5 : 10;
+		final switch(unit(m.to)) {
+			case Unit.none:   return 0;
+			case Unit.pawn:   return 1;
+			case Unit.bishop: return 2;
+			case Unit.tour:   return 3;
+			case Unit.queen:  return 3;
+			case Unit.knight: return king_weigth;
+		}
+	}
+	private int rank_spock_move(Move m) {
+		auto mine=side(m.from);
+		auto number_of_kings=units_of(mine.opposite).count!(a => unit(a) == Unit.knight);
+		auto king_weigth=(number_of_kings > 1)? 5 : 10;
+		final switch(unit(m.to)) {
+			case Unit.none:   return 0;
+			case Unit.pawn:   return (side(m.to) == mine)? 1 : 2;
+			case Unit.bishop: return (side(m.to) == mine)? 2 : 3;
+			case Unit.tour:   return (side(m.to) == mine)? 4 : 5;
+			case Unit.queen:  return (side(m.to) == mine)? 2 : 3;
+			case Unit.knight: return (side(m.to) == mine)? 0 : king_weigth;
+		}
+	}
 
 
 	private cell[] targets_of_pawn(cell p) {
