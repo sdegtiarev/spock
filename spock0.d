@@ -1,12 +1,12 @@
-import board;
-import human;
+import spock.board;
+import spock.human;
 
 
 void main(string[] arg)
 {
 	Board!5 board;
-	auto h1=human.human(board, Side.white);
-	auto h2=human.human(board, Side.black);
+	auto h1=human(board, Side.white);
+	auto h2=human(board, Side.black);
 
 	h1.loop((){
 		if(h1.dead) h2.terminate;

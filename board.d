@@ -1,4 +1,4 @@
-module board;
+module spock.board;
 import std.conv;
 import std.traits;
 import std.algorithm;
@@ -37,7 +37,7 @@ Side opposite(Side x) {
 
 
 
-struct Board(size_t SIZE)
+struct Board(int SIZE)
 {
 static @property int pixels() { return CELL*SIZE+1; }
 	@property size_t size() const { return SIZE; }
@@ -136,10 +136,6 @@ static @property int pixels() { return CELL*SIZE+1; }
 			.empty;
 	}
 
-static string ident(int N)() {
-	immutable char[256] s=' ';
-	return s[0..N-1].idup;
-}
 
 	int rank(int N)(Move x) {
 		static if(N == 0) {

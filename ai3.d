@@ -1,5 +1,6 @@
-module ai;
-import board;
+module spock.ai.l3;
+import spock.board;
+import spock.player;
 import std.random;
 import std.algorithm;
 import std.array;
@@ -7,26 +8,26 @@ import std.typecons;
 import std.exception;
 
 
-auto player_3(size_t SIZE)(ref Board!SIZE board, Side side)
+auto player(int SIZE)(ref Board!SIZE board, Side side)
 {
-	return new AI_3!SIZE(board, side);
+	return new AI3!SIZE(board, side);
+}
+auto player(int SIZE)(Board!SIZE *board, Side side)
+{
+	return new AI3!SIZE(*board, side);
 }
 
 
-class AI_3(size_t SIZE)
+class AI3(int SIZE) : Player
 {
-	private Side mine;
 	private Board!SIZE *board;
 
 	this(ref Board!SIZE board, Side side) {
-		this.mine=side;
+		super(side);
 		this.board=&board;
 	}
 
-	@property bool dead() { return false; }
-	void terminate() { }
-
-	void make_turn() {
+	override void make_turn() {
 		if(board.turn != mine)
 			return;
 		if(!board.spock(mine) || !board.move(best_move)) {
@@ -36,7 +37,7 @@ class AI_3(size_t SIZE)
 		board.lock(mine.opposite);
 	}
 
-	auto best_move() {
+	private auto best_move() {
 		Board!SIZE.Move[][int] weight;
 		foreach(m; board.variants_of(mine))
 			weight[board.rank!2(m)]~=m;
@@ -44,7 +45,6 @@ class AI_3(size_t SIZE)
 			return Board!SIZE.Move();
 		auto w=sort!("a>b")(weight.byKey.array).front;
 		auto best=Board!SIZE.one_of(weight[w]);
-		//writefln("%-6s %s    %s", board.unit(best.from),Board!SIZE.print_move(best), w);
 		return best;
 	}
 

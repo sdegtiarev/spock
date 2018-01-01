@@ -1,13 +1,13 @@
-import board;
-import human;
-import ai;
+import spock.board;
+import spock.human;
+import spock.ai.l2;
 
 
 void main(string[] arg)
 {
 	Board!6 board;
-	auto h1=human.human(board, Side.white);
-	auto h2=ai.player_2(board, Side.black);
+	auto h1=human(board, Side.white);
+	auto h2=spock.ai.l2.player(board, Side.black);
 
 	h1.loop((){
 		if(h1.dead) h2.terminate;

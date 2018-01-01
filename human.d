@@ -1,23 +1,27 @@
-module human;
-import board;
-import display;
+module spock.human;
+import spock.board;
+import spock.player;
+import spock.display;
 import arsd.simpledisplay;
 import std.conv : to;
 
-auto human(size_t SIZE)(ref Board!SIZE board, Side side)
+Player human(int SIZE)(ref Board!SIZE board, Side side)
 {
 	return new Human!SIZE(board, side);
 }
+Player human(int SIZE)(Board!SIZE *board, Side side)
+{
+	return new Human!SIZE(*board, side);
+}
 
-class Human(size_t SIZE)
+class Human(int SIZE) : Player
 {
 	private SpockDisplay disp;
-	private Side side;
 	private Board!SIZE *board;
 	Board!SIZE.cell selection;
 
 	this(SpockDisplay disp, ref Board!SIZE board, Side side) {
-		this.side=side;
+		super(side);
 		this.board=&board;
 		this.disp=(side == Side.white)? disp : disp.flip(board);
 		disp.window.setEventHandlers(
@@ -27,9 +31,9 @@ class Human(size_t SIZE)
 	}
 
 	this(ref Board!SIZE board, Side side) {
-		this.side=side;
+		super(side);
 		this.board=&board;
-		this.disp=display.display(board);
+		this.disp=display(board);
 		if(side == Side.black) 
 			disp.flip(board);
 		disp.window.setEventHandlers(
@@ -38,14 +42,19 @@ class Human(size_t SIZE)
 		);
 	}
 
-	@property bool dead() { return disp.window.closed; }
-	void terminate() { disp.window.close; }
+	override @property bool dead() { return disp.window.closed; }
+	override void terminate() { disp.window.close; }
+	override void loop(void delegate() handler) {
+		disp.window.eventLoop(100, handler);
+	}
 
-	void make_turn() {
+
+
+	override void make_turn() {
 		if(dead)
 			return;
 		disp.draw(*board);
-		if(!board.spock(side)) {
+		if(!board.spock(mine)) {
 			board.lock(Side.none);
 			if(board.last_move.from)
 				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board!SIZE.print_move(board.last_move)~" : you lost");
@@ -53,7 +62,7 @@ class Human(size_t SIZE)
 				disp.window.title("you lost");
 			return;
 		}
-		if(board.turn == side)
+		if(board.turn == mine)
 			if(board.last_move.from)
 				disp.window.title(to!string(board.unit(board.last_move.to))~" "~Board!SIZE.print_move(board.last_move)~" : your turn");
 			else
@@ -64,26 +73,10 @@ class Human(size_t SIZE)
 			disp.window.title("wait ...");
 	}
 
-	void loop(T)(T handler) {
-		disp.window.eventLoop(100, handler);
-	}
-
-
-	private bool check_spock() const {
-		for(int y=0; y < SIZE; ++y)
-		for(int x=0; x < SIZE; ++x) {
-			auto p=Board!SIZE.cell(x,y);
-			if(board.side(p) == side && board.unit(p) == Unit.knight)
-				return 1;
-		}
-		return 0;
-	}
-
-
 	private void handle_mouse(MouseEvent event) {
 		if(event.type != MouseEventType.buttonPressed)
 			return;
-		if(board.turn != this.side)
+		if(board.turn != mine)
 			return;
 
 		auto p=disp.inside(board, event.x, event.y);
@@ -92,7 +85,7 @@ class Human(size_t SIZE)
 
 		if(!selection) {
 		// make new selection
-			if(board.side(p) == this.side) {
+			if(board.side(p) == mine) {
 				auto ts=board.targets_of(p);
 				if(ts.length == 0) return;
 				foreach(t; ts)
@@ -108,7 +101,7 @@ class Human(size_t SIZE)
 			board.move(selection, p);
 			board.unselect;
 			selection=Board!SIZE.cell();
-			board.lock(side.opposite);
+			board.lock(mine.opposite);
 		}
 		// false click, do nothing
 	}

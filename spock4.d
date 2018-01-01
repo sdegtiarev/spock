@@ -1,14 +1,13 @@
 import spock.board;
 import spock.human;
-import spock.ai.l1;
-import std.stdio;
+import spock.ai.l4;
 
 
 void main(string[] arg)
 {
-	Board!5 board;
+	Board!6 board;
 	auto h1=human(board, Side.white);
-	auto h2=spock.ai.l1.player(board, Side.black);
+	auto h2=spock.ai.l4.player(board, Side.black);
 
 	h1.loop((){
 		if(h1.dead) h2.terminate;

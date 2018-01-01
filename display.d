@@ -1,6 +1,6 @@
-module display;
-import board;
-import icons;
+module spock.display;
+import spock.board;
+import spock.icons;
 import arsd.simpledisplay;
 immutable int MARGIN=24;
 
@@ -114,38 +114,38 @@ class SpockDisplay
 
 	private void init_icons()
 	{
-		icon[Unit.none|Side.none|Mark.none]=icons.sprite(window, blank);
-		icon[Unit.none|Side.none|Mark.targeted]=icons.sprite(window, blank_t);
-		icon[Unit.pawn|Side.white|Mark.none]=icons.sprite(window, pawn_w);
-		icon[Unit.pawn|Side.black|Mark.none]=icons.sprite(window, pawn_b);
-		icon[Unit.pawn|Side.white|Mark.selected]=icons.sprite(window, pawn_ws);
-		icon[Unit.pawn|Side.black|Mark.selected]=icons.sprite(window, pawn_bs);
-		icon[Unit.pawn|Side.white|Mark.targeted]=icons.sprite(window, pawn_wt);
-		icon[Unit.pawn|Side.black|Mark.targeted]=icons.sprite(window, pawn_bt);
-		icon[Unit.bishop|Side.white|Mark.none]=icons.sprite(window, bishop_w);
-		icon[Unit.bishop|Side.black|Mark.none]=icons.sprite(window, bishop_b);
-		icon[Unit.bishop|Side.white|Mark.selected]=icons.sprite(window, bishop_ws);
-		icon[Unit.bishop|Side.black|Mark.selected]=icons.sprite(window, bishop_bs);
-		icon[Unit.bishop|Side.white|Mark.targeted]=icons.sprite(window, bishop_wt);
-		icon[Unit.bishop|Side.black|Mark.targeted]=icons.sprite(window, bishop_bt);
-		icon[Unit.tour|Side.white|Mark.none]=icons.sprite(window, tour_w);
-		icon[Unit.tour|Side.black|Mark.none]=icons.sprite(window, tour_b);
-		icon[Unit.tour|Side.white|Mark.selected]=icons.sprite(window, tour_ws);
-		icon[Unit.tour|Side.black|Mark.selected]=icons.sprite(window, tour_bs);
-		icon[Unit.tour|Side.white|Mark.targeted]=icons.sprite(window, tour_wt);
-		icon[Unit.tour|Side.black|Mark.targeted]=icons.sprite(window, tour_bt);
-		icon[Unit.queen|Side.white|Mark.none]=icons.sprite(window, queen_w);
-		icon[Unit.queen|Side.black|Mark.none]=icons.sprite(window, queen_b);
-		icon[Unit.queen|Side.white|Mark.selected]=icons.sprite(window, queen_ws);
-		icon[Unit.queen|Side.black|Mark.selected]=icons.sprite(window, queen_bs);
-		icon[Unit.queen|Side.white|Mark.targeted]=icons.sprite(window, queen_wt);
-		icon[Unit.queen|Side.black|Mark.targeted]=icons.sprite(window, queen_bt);
-		icon[Unit.knight|Side.white|Mark.none]=icons.sprite(window, spock_w);
-		icon[Unit.knight|Side.black|Mark.none]=icons.sprite(window, spock_b);
-		icon[Unit.knight|Side.white|Mark.selected]=icons.sprite(window, spock_ws);
-		icon[Unit.knight|Side.black|Mark.selected]=icons.sprite(window, spock_bs);
-		icon[Unit.knight|Side.white|Mark.targeted]=icons.sprite(window, spock_wt);
-		icon[Unit.knight|Side.black|Mark.targeted]=icons.sprite(window, spock_bt);
+		icon[Unit.none|Side.none|Mark.none]=sprite(window, blank);
+		icon[Unit.none|Side.none|Mark.targeted]=sprite(window, blank_t);
+		icon[Unit.pawn|Side.white|Mark.none]=sprite(window, pawn_w);
+		icon[Unit.pawn|Side.black|Mark.none]=sprite(window, pawn_b);
+		icon[Unit.pawn|Side.white|Mark.selected]=sprite(window, pawn_ws);
+		icon[Unit.pawn|Side.black|Mark.selected]=sprite(window, pawn_bs);
+		icon[Unit.pawn|Side.white|Mark.targeted]=sprite(window, pawn_wt);
+		icon[Unit.pawn|Side.black|Mark.targeted]=sprite(window, pawn_bt);
+		icon[Unit.bishop|Side.white|Mark.none]=sprite(window, bishop_w);
+		icon[Unit.bishop|Side.black|Mark.none]=sprite(window, bishop_b);
+		icon[Unit.bishop|Side.white|Mark.selected]=sprite(window, bishop_ws);
+		icon[Unit.bishop|Side.black|Mark.selected]=sprite(window, bishop_bs);
+		icon[Unit.bishop|Side.white|Mark.targeted]=sprite(window, bishop_wt);
+		icon[Unit.bishop|Side.black|Mark.targeted]=sprite(window, bishop_bt);
+		icon[Unit.tour|Side.white|Mark.none]=sprite(window, tour_w);
+		icon[Unit.tour|Side.black|Mark.none]=sprite(window, tour_b);
+		icon[Unit.tour|Side.white|Mark.selected]=sprite(window, tour_ws);
+		icon[Unit.tour|Side.black|Mark.selected]=sprite(window, tour_bs);
+		icon[Unit.tour|Side.white|Mark.targeted]=sprite(window, tour_wt);
+		icon[Unit.tour|Side.black|Mark.targeted]=sprite(window, tour_bt);
+		icon[Unit.queen|Side.white|Mark.none]=sprite(window, queen_w);
+		icon[Unit.queen|Side.black|Mark.none]=sprite(window, queen_b);
+		icon[Unit.queen|Side.white|Mark.selected]=sprite(window, queen_ws);
+		icon[Unit.queen|Side.black|Mark.selected]=sprite(window, queen_bs);
+		icon[Unit.queen|Side.white|Mark.targeted]=sprite(window, queen_wt);
+		icon[Unit.queen|Side.black|Mark.targeted]=sprite(window, queen_bt);
+		icon[Unit.knight|Side.white|Mark.none]=sprite(window, spock_w);
+		icon[Unit.knight|Side.black|Mark.none]=sprite(window, spock_b);
+		icon[Unit.knight|Side.white|Mark.selected]=sprite(window, spock_ws);
+		icon[Unit.knight|Side.black|Mark.selected]=sprite(window, spock_bs);
+		icon[Unit.knight|Side.white|Mark.targeted]=sprite(window, spock_wt);
+		icon[Unit.knight|Side.black|Mark.targeted]=sprite(window, spock_bt);
 	}
 
 }
